@@ -20,12 +20,12 @@ app.get('/', async (req, res) => {
 
 app.post('/webhook', async (req, res) => {
     const { message } = req.body;
-    let chatStep = await Chat.findOne({ chat_id: message.chat.id });
-    if (!chatStep) {
-        chatStep = await Chat.create({ chat_id: message.chat.id, step: 0 });
-    }
-    console.log('##### STEP: ', message.chat.id, chatStep.step)
     if (message) {
+        let chatStep = await Chat.findOne({ chat_id: message.chat.id });
+        if (!chatStep) {
+            chatStep = await Chat.create({ chat_id: message.chat.id, step: 0 });
+        }
+        console.log('##### STEP: ', message.chat.id, chatStep.step)
         const items = (await Item.find()).map((item) => ({ text: item.name }));
         if (message.text === 'Перемещение' && chatStep.step === 0) {
             try {
