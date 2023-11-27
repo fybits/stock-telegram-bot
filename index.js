@@ -50,6 +50,10 @@ app.post('/webhook', async (req, res) => {
         }
         if (chatStep.step === 1) {
             if (!items.find((item) => item.text === message.text)) {
+                const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
+                    chat_id: message.chat.id,
+                    text: 'Неверный формат',
+                });
                 await chatStep.updateOne({ $inc: { step: -1 } });
             } else {
                 try {
