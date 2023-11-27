@@ -27,6 +27,9 @@ app.post('/webhook', async (req, res) => {
         }
         console.log('##### STEP: ', message.chat.id, chatStep.step)
         const items = (await Item.find()).map((item) => ({ text: item.name }));
+        if (message.text === 'Отмена') {
+            await chatStep.updateOne({ step: 0 });
+        }
         if (message.text === 'Перемещение' && chatStep.step === 0) {
             try {
                 const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
@@ -34,7 +37,8 @@ app.post('/webhook', async (req, res) => {
                     text: 'Выберите одну из опций ниже',
                     reply_markup: {
                         keyboard: [
-                            items
+                            items,
+                            [{ text: 'Отмена' }]
                         ],
                     }
                 });
@@ -56,7 +60,7 @@ app.post('/webhook', async (req, res) => {
                             keyboard: [[
                                 { text: 'Коробки' },
                                 { text: 'Штуки' },
-                            ]],
+                            ], [{ text: 'Отмена' }]],
                         }
                     });
                     await chatStep.updateOne({ $inc: { step: 1 } });
