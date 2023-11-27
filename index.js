@@ -53,10 +53,10 @@ app.post('/webhook', async (req, res) => {
                         chat_id: message.chat.id,
                         text: 'Коробок или штук',
                         reply_markup: {
-                            keyboard: [
+                            keyboard: [[
                                 { text: 'Коробки' },
                                 { text: 'Штуки' },
-                            ],
+                            ]],
                         }
                     });
                     await chatStep.updateOne({ $inc: { step: 1 } });
