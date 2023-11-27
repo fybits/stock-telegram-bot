@@ -4,6 +4,14 @@ const axios = require('axios').default;
 var bodyParser = require('body-parser')
 require('dotenv').config()
 const port = process.env.PORT;
+const { MongoClient } = require('mongodb');
+
+const mongoURI = process.env.MONGO_PRIVATE_URL;
+
+const client = new MongoClient(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+});
 
 app.use(bodyParser.json());
 
@@ -16,17 +24,16 @@ app.get('/', async (req, res) => {
 app.post('/webhook', async (req, res) => {
     const { message } = req.body;
     console.log(req.body);
-    if (message.text === 'Add') {
+    const database = client.db('test');
+    const items = database.collection('items');
+    if (message.text === 'Перемещение') {
         try {
             const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
                 chat_id: message.chat.id,
                 text: 'Please choose from one of the options below',
                 reply_markup: {
                     keyboard: [
-                        [{ text: 'Option 1' }],
-                        [{ text: 'Option 2' }],
-                        [{ text: 'Option 3' }],
-                        [{ text: 'Option 4' }],
+                        (await items.find().toArray()).map((doc) => ({ text: doc.name }))
                     ],
                 }
             });
@@ -43,6 +50,7 @@ app.listen(port, async () => {
         const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/setWebhook`, {
             url: "https://stock-telegram-bot-production.up.railway.app/webhook"
         });
+        await client.connect();
         console.log(res2.data)
     } catch (error) {
         console.log(error.toJSON())
