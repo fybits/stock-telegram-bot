@@ -38,16 +38,15 @@ app.post('/webhook', async (req, res) => {
                         ],
                     }
                 });
-                chatStep.step += 1;
-                await chatStep.save();
+                await chatStep.updateOne({ $inc: { step: 1 } });
+
             } catch (error) {
                 console.log(error.response.data)
             }
         }
         if (chatStep.step === 1) {
             if (!items.find((item) => item.text === message.text)) {
-                chatStep.step -= 1;
-                await chatStep.save();
+                await chatStep.updateOne({ $inc: { step: -1 } });
             } else {
                 const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
                     chat_id: message.chat.id,
@@ -59,8 +58,8 @@ app.post('/webhook', async (req, res) => {
                         ],
                     }
                 });
-                chatStep.step += 1;
-                await chatStep.save();
+                await chatStep.updateOne({ $inc: { step: 1 } });
+
             }
         }
         if (message.text === 'Добавить') {
