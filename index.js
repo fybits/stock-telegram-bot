@@ -21,7 +21,6 @@ app.get('/', async (req, res) => {
 app.post('/webhook', async (req, res) => {
     const { message } = req.body;
     console.log(req.body);
-    const database = client.db('test');
     let chatStep = await Chat.findOne({ chat_id: message.chat.id });
     if (!chatStep) {
         chatStep = await Chat.create({ chat_id: message.chat.id, step: 0 });
