@@ -14,11 +14,11 @@ app.get('/', async (req, res) => {
 })
 
 app.post('/webhook', async (req, res) => {
-    const { text, chat } = req.body;
+    const { message } = req.body;
     console.log(req.body);
-    if (text === 'Add') {
+    if (message.text === 'Add') {
         const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
-            chat_id: chat.id,
+            chat_id: message.chat.id,
             text: 'Please choose from one of the options below',
             reply_markup: {
                 keyboard: [
