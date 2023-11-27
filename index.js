@@ -7,6 +7,7 @@ const port = process.env.PORT;
 const mongoose = require('mongoose');
 const Item = require('./src/models/items');
 const Chat = require('./src/models/chats');
+const { initStep, selectingStep } = require('./src/dialog');
 
 const mongoURI = process.env.MONGO_PRIVATE_URL;
 
@@ -30,49 +31,9 @@ app.post('/webhook', async (req, res) => {
         if (message.text === 'Отмена') {
             await chatStep.updateOne({ step: 0 });
         }
-        if (message.text === 'Перемещение' && chatStep.step === 0) {
-            try {
-                const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
-                    chat_id: message.chat.id,
-                    text: 'Выберите одну из опций ниже',
-                    reply_markup: {
-                        keyboard: [
-                            items,
-                            [{ text: 'Отмена' }]
-                        ],
-                    }
-                });
-                await chatStep.updateOne({ $inc: { step: 1 } });
+        initStep(message, chatStep);
+        selectingStep(message, chatStep)
 
-            } catch (error) {
-                console.log(error.response.data)
-            }
-        }
-        if (chatStep.step === 1) {
-            if (!items.find((item) => item.text === message.text)) {
-                const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
-                    chat_id: message.chat.id,
-                    text: 'Неверный формат',
-                });
-                await chatStep.updateOne({ $inc: { step: -1 } });
-            } else {
-                try {
-                    const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
-                        chat_id: message.chat.id,
-                        text: 'Коробок или штук',
-                        reply_markup: {
-                            keyboard: [[
-                                { text: 'Коробки' },
-                                { text: 'Штуки' },
-                            ], [{ text: 'Отмена' }]],
-                        }
-                    });
-                    await chatStep.updateOne({ $inc: { step: 1 } });
-                } catch (error) {
-                    console.log(error.response.data)
-                }
-            }
-        }
         if (message.text === 'Добавить') {
 
         }
