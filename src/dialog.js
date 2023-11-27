@@ -1,6 +1,6 @@
 const axios = require('axios').default;
 
-const initStep = async (message, chatStep) => {
+const initStep = async (message, items, chatStep) => {
     if (message.text === 'Перемещение' || chatStep.step === 0) {
         try {
             const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
@@ -21,7 +21,7 @@ const initStep = async (message, chatStep) => {
     }
 }
 
-const selectingStep = async (message, chatStep) => {
+const selectingStep = async (message, items, chatStep) => {
     if (chatStep.step === 1) {
         if (!items.find((item) => item.text === message.text)) {
             const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
