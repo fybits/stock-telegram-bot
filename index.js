@@ -8,7 +8,7 @@ const { MongoClient } = require('mongodb');
 
 const mongoURI = process.env.MONGO_PRIVATE_URL;
 
-const client = new MongoClient(uri, {
+const client = new MongoClient(mongoURI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 });
