@@ -1,12 +1,15 @@
 const express = require('express')
 const app = express()
 const axios = require('axios').default;
+var bodyParser = require('body-parser')
 require('dotenv').config()
 const port = process.env.PORT;
 
+app.use(bodyParser.json());
+
 app.get('/', async (req, res) => {
     const response = await axios.get(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/getMe`);
-    console.log(res.data);
+    console.log(response.data);
     res.send('Hello World!')
 })
 
