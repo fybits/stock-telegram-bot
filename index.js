@@ -17,8 +17,12 @@ app.post('/webhook', (req, res) => {
 
 app.listen(port, async () => {
     console.log(`Example app listening on port ${port}`)
-    const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/setWebhook`, {
-        url: "https://stock-telegram-bot-production.up.railway.app/webhook"
-    });
-    console.log(res2)
+    try {
+        const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/setWebhook`, {
+            url: "https://stock-telegram-bot-production.up.railway.app/webhook"
+        });
+        console.log(res2)
+    } catch (error) {
+        console.log(error)
+    }
 })
