@@ -21,7 +21,7 @@ app.listen(port, async () => {
         const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/setWebhook`, {
             url: "https://stock-telegram-bot-production.up.railway.app/webhook"
         });
-        console.log(res2)
+        console.log(res2.data)
     } catch (error) {
         console.log(error)
     }
