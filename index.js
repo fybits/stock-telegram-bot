@@ -48,18 +48,21 @@ app.post('/webhook', async (req, res) => {
             if (!items.find((item) => item.text === message.text)) {
                 await chatStep.updateOne({ $inc: { step: -1 } });
             } else {
-                const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
-                    chat_id: message.chat.id,
-                    text: 'Коробок или штук',
-                    reply_markup: {
-                        keyboard: [
-                            { text: 'Коробки' },
-                            { text: 'Штуки' },
-                        ],
-                    }
-                });
-                await chatStep.updateOne({ $inc: { step: 1 } });
-
+                try {
+                    const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
+                        chat_id: message.chat.id,
+                        text: 'Коробок или штук',
+                        reply_markup: {
+                            keyboard: [
+                                { text: 'Коробки' },
+                                { text: 'Штуки' },
+                            ],
+                        }
+                    });
+                    await chatStep.updateOne({ $inc: { step: 1 } });
+                } catch (error) {
+                    console.log(error.response.data)
+                }
             }
         }
         if (message.text === 'Добавить') {
