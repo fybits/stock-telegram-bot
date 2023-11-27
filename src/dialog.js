@@ -14,7 +14,7 @@ const initStep = async (message, items, chatStep) => {
                 }
             });
             await chatStep.updateOne({ $inc: { step: 1 } });
-
+            return true;
         } catch (error) {
             console.log(error.response.data)
         }
@@ -43,6 +43,7 @@ const selectingStep = async (message, items, chatStep) => {
                 }
             });
             await chatStep.updateOne({ $inc: { step: 1 } });
+            return true;
         } catch (error) {
             console.log(error.response.data)
         }
