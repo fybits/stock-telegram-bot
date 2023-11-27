@@ -28,7 +28,7 @@ const selectingStep = async (message, items, chatStep) => {
                 chat_id: message.chat.id,
                 text: 'Неверный формат',
             });
-            initStep(message, chatStep);
+            initStep(message, items, chatStep);
             return;
         }
         try {
