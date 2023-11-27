@@ -23,12 +23,10 @@ app.post('/webhook', async (req, res) => {
                 text: 'Please choose from one of the options below',
                 reply_markup: {
                     keyboard: [
-                        [
-                            { text: 'Option 1' },
-                            { text: 'Option 2' },
-                            { text: 'Option 3' },
-                            { text: 'Option 4' },
-                        ]
+                        [{ text: 'Option 1' }],
+                        [{ text: 'Option 2' }],
+                        [{ text: 'Option 3' }],
+                        [{ text: 'Option 4' }],
                     ],
                 }
             });
