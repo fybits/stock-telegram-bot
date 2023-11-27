@@ -24,7 +24,7 @@ app.post('/webhook', async (req, res) => {
     if (!chatStep) {
         chatStep = await Chat.create({ chat_id: message.chat.id, step: 0 });
     }
-    console.log('##### STEP: ', chatStep.step)
+    console.log('##### STEP: ', message.chat.id, chatStep.step)
     if (message) {
         const items = (await Item.find()).map((item) => ({ text: item.name }));
         if (message.text === 'Перемещение' && chatStep.step === 0) {
