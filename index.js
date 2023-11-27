@@ -29,8 +29,8 @@ app.post('/webhook', async (req, res) => {
         console.log('##### STEP: ', message.chat.id, chatStep.step)
         const items = (await Item.find()).map((item) => ({ text: item.name }));
         if (message.text === 'Отмена') {
-            await chatStep.updateOne({ step: 0 });
-            await initStep(message, items, chatStep);
+            await chatStep.updateOne({ $set: { step: 0 } });
+            // await initStep(message, items, chatStep);
         }
         await initStep(message, items, chatStep);
         await selectingStep(message, items, chatStep)
