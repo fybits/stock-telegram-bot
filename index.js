@@ -27,7 +27,7 @@ app.post('/webhook', async (req, res) => {
             chatStep = await Chat.create({ chat_id: message.chat.id, step: 0 });
         }
         console.log('##### STEP: ', message.chat.id, chatStep.step)
-        const items = (await Item.find()).map((item) => ({ text: item.name }));
+        const items = await Item.find()
         if (message.text === 'Отмена') {
             chatStep.step = 0;
             await chatStep.save();

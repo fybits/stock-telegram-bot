@@ -6,7 +6,7 @@ const selectPrompt = async (message, items) => {
         text: 'Выберите одну из опций ниже',
         reply_markup: {
             keyboard: [
-                items,
+                items.map((item) => ({ text: item.name })),
                 [{ text: 'Отмена' }]
             ],
         }
@@ -54,7 +54,7 @@ const initStep = async (message, items, chatStep) => {
 
 const selectingStep = async (message, items, chatStep) => {
     if (chatStep.step === 1) {
-        const item = items.find((item) => item.text === message.text);
+        const item = items.find((item) => item.text === message.name);
         if (!item) {
             await invalidInput(message);
             await selectPrompt(message, items);
@@ -97,7 +97,7 @@ const amountStep = async (message, items, chatStep) => {
             return;
         }
         try {
-            await amountPrompt(message, items)
+            await amountPrompt(message)
             await chatStep.updateOne({ $inc: { step: 1 }, $set: { is_boxed: message.text === 'Коробки' } });
             return true;
         } catch (error) {
