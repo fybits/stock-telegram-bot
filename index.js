@@ -7,7 +7,7 @@ const port = process.env.PORT;
 const mongoose = require('mongoose');
 const Item = require('./src/models/items');
 const Chat = require('./src/models/chats');
-const { initStep, selectingStep, amountStep } = require('./src/dialog');
+const { initStep, selectingStep, amountStep, finalStep } = require('./src/dialog');
 
 const mongoURI = process.env.MONGO_PRIVATE_URL;
 
@@ -36,6 +36,7 @@ app.post('/webhook', async (req, res) => {
         if (!done) done = await initStep(message, items, chatStep)
         if (!done) done = await selectingStep(message, items, chatStep)
         if (!done) done = await amountStep(message, items, chatStep)
+        if (!done) done = await finalStep(message, items, chatStep)
 
         if (message.text === 'Добавить') {
 

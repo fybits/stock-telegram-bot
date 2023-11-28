@@ -127,4 +127,5 @@ module.exports = {
     initStep,
     selectingStep,
     amountStep,
+    finalStep,
 }
