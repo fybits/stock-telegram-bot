@@ -120,7 +120,7 @@ const finalStep = async (message, items, chatStep) => {
             await currentTransferingPrompt(message, chatStep.items)
             return true;
         } catch (error) {
-            console.log(error.response.data)
+            console.log(error)
         }
     }
 }
