@@ -107,7 +107,7 @@ const amountStep = async (message, items, chatStep) => {
 }
 
 const finalStep = async (message, items, chatStep) => {
-    if (chatStep.step === 2) {
+    if (chatStep.step === 3) {
         if (!isNumeric(message.text)) {
             await invalidInput(message);
             await packagePrompt(message);
