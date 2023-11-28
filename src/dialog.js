@@ -115,7 +115,7 @@ const finalStep = async (message, items, chatStep) => {
         }
         try {
             await chatStep.updateOne({ $inc: { step: 1 } });
-            chatStep.items.push({ item: chatStep.current_item, amount: +message.text * chatStep.current_item.box_size })
+            chatStep.items.push({ item: chatStep.current_item, amount: chatStep.is_boxed ? +message.text * chatStep.current_item.box_size : +message.text })
             await chatStep.save()
             await currentTransferingPrompt(message, chatStep.items)
             return true;
