@@ -43,7 +43,7 @@ const invalidInput = async (message) => {
 const initStep = async (message, items, chatStep) => {
     if (message.text === 'Перемещение' || chatStep.step === 0) {
         try {
-            selectPrompt(message, items)
+            await selectPrompt(message, items)
             await chatStep.updateOne({ $inc: { step: 1 } });
             return true;
         } catch (error) {
@@ -54,14 +54,15 @@ const initStep = async (message, items, chatStep) => {
 
 const selectingStep = async (message, items, chatStep) => {
     if (chatStep.step === 1) {
-        if (!items.find((item) => item.text === message.text)) {
-            invalidInput(message);
-            selectPrompt(message, items);
+        const item = items.find((item) => item.text === message.text);
+        if (!item) {
+            await invalidInput(message);
+            await selectPrompt(message, items);
             return;
         }
         try {
-            packagePrompt(message);
-            await chatStep.updateOne({ $inc: { step: 1 } });
+            await packagePrompt(message);
+            await chatStep.updateOne({ $inc: { step: 1 }, $set: { current_item: item } });
             return true;
         } catch (error) {
             console.log(error.response.data)
@@ -75,10 +76,10 @@ function isNumeric(str) {
         !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
 }
 
-const currentTransferingPrompt = async (message) => {
+const currentTransferingPrompt = async (message, items) => {
     const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
         chat_id: message.chat.id,
-        text: 'Итого',
+        text: `Итого\n ${items.map((i) => `${i.item.name} - ${i.amount} шт`).join('\n')}`,
         reply_markup: {
             keyboard: [[
                 { text: 'Добавить еще' },
@@ -91,13 +92,13 @@ const currentTransferingPrompt = async (message) => {
 const amountStep = async (message, items, chatStep) => {
     if (chatStep.step === 2) {
         if (!['Коробки', 'Штуки'].includes(message.text)) {
-            invalidInput(message);
-            packagePrompt(message);
+            await invalidInput(message);
+            await packagePrompt(message);
             return;
         }
         try {
-            amountPrompt(message, items)
-            await chatStep.updateOne({ $inc: { step: 1 } });
+            await amountPrompt(message, items)
+            await chatStep.updateOne({ $inc: { step: 1 }, $set: { is_boxed: message.text === 'Коробки' } });
             return true;
         } catch (error) {
             console.log(error.response.data)
@@ -108,13 +109,15 @@ const amountStep = async (message, items, chatStep) => {
 const finalStep = async (message, items, chatStep) => {
     if (chatStep.step === 2) {
         if (!isNumeric(message.text)) {
-            invalidInput(message);
-            packagePrompt(message);
+            await invalidInput(message);
+            await packagePrompt(message);
             return;
         }
         try {
-            currentTransferingPrompt(message, items)
             await chatStep.updateOne({ $inc: { step: 1 } });
+            chatStep.items.push({ item: chatStep.current_item, amount: +message.text * chatStep.current_item.box_size })
+            await chatStep.save()
+            await currentTransferingPrompt(message, chatStep.items)
             return true;
         } catch (error) {
             console.log(error.response.data)
