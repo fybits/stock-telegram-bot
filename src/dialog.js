@@ -54,7 +54,7 @@ const initStep = async (message, items, chatStep) => {
 
 const selectingStep = async (message, items, chatStep) => {
     if (chatStep.step === 1) {
-        const item = items.find((item) => item.text === message.name);
+        const item = items.find((item) => item.name === message.text);
         if (!item) {
             await invalidInput(message);
             await selectPrompt(message, items);
