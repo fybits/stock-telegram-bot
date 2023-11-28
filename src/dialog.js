@@ -54,7 +54,7 @@ const initStep = async (message, items, chatStep) => {
 
 const selectingStep = async (message, items, chatStep) => {
     if (chatStep.step === 1) {
-        const item = items.find((item) => item.name === message.text);
+        const item = items.find({ name: message.text });
         if (!item) {
             await invalidInput(message);
             await selectPrompt(message, items);
@@ -79,7 +79,7 @@ function isNumeric(str) {
 const currentTransferingPrompt = async (message, items) => {
     const res2 = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
         chat_id: message.chat.id,
-        text: `Итого\n ${items.map((i) => `${i.item.name} - ${i.amount} шт`).join('\n')}`,
+        text: `Итого\n${items.map((i) => `${i.item.name} - ${i.amount} шт`).join('\n')}`,
         reply_markup: {
             keyboard: [[
                 { text: 'Добавить еще' },
