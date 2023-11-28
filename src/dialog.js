@@ -119,8 +119,8 @@ const finalStep = async (message, items, chatStep) => {
             await chatStep.save()
             await currentTransferingPrompt(message, chatStep.items)
             return true;
-        } catch (error) {
-            console.log(error)
+        } catch (err) {
+            console.log(err)
         }
     }
 }
