@@ -19,6 +19,19 @@ function isNumeric(str: string) {
         !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
 }
 
+const replyTotal = async (ctx: CustomContext) => {
+    const items = ctx.scene.session.items;
+    let maxLength = Math.max(...items.map(({ name }) => name.length));
+    ctx.reply(`Итого\n<code>${items.map((i) => `${i.name.padEnd(maxLength + 1)} - ${i.amount} шт`).join('\n')}</code>`, {
+        parse_mode: 'HTML',
+        ...Markup.keyboard([[
+            { text: 'Добавить еще' },
+            { text: 'Готово' },
+        ], [{ text: 'Отмена' }]]
+        )
+    });
+}
+
 const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransferScene',
     Telegraf.on(message('text'), async (ctx) => {
         try {
@@ -46,7 +59,7 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
                 return ctx.reply('Неверное значение. Попробуй еще раз:)');
             }
             const is_boxed = text === 'Коробки';
-            ctx.reply(`Хорошо. Укажи сколько ${is_boxed ? 'коробок' : 'штук'} переносится.`);
+            ctx.reply(`Хорошо. Укажи сколько ${is_boxed ? 'коробок' : 'штук'} переносится.`, { reply_markup: { remove_keyboard: true } });
             ctx.scene.session.is_boxed = is_boxed;
             ctx.wizard.next()
         } catch (error) {
@@ -63,13 +76,42 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
             }
 
             ctx.scene.session.amount = +text;
-            ctx.scene.session.items.push({ name: ctx.scene.session.current_item, amount: ctx.scene.session.is_boxed ? +text * 12 : +text })
-            ctx.reply(`Итого\n${ctx.scene.session.items.map((i) => `${i.name} - ${i.amount} шт`).join('\n')}`, Markup.keyboard([[
-                { text: 'Добавить еще' },
-                { text: 'Готово' },
-            ], [{ text: 'Отмена' }]]
-            ));
-            ctx.wizard.selectStep(0);
+            const items = ctx.scene.session.items || [];
+            items.push({ name: ctx.scene.session.current_item, amount: ctx.scene.session.is_boxed ? +text * 12 : +text })
+            ctx.scene.session.items = items;
+            await replyTotal(ctx)
+            ctx.wizard.next();
+        } catch (error) {
+            console.log(error)
+            ctx.reply('Упс... Произошла какая-то ошибка');
+        }
+    }),
+    Telegraf.on(message('text'), async (ctx) => {
+        try {
+            const msg = ctx.message;
+            const { text } = msg;
+            switch (text) {
+                case 'Добавить еще':
+                    ctx.reply("Выберите одну из опций ниже", Markup.keyboard([
+                        options,
+                        [{ text: 'Отмена' }]
+                    ]))
+                    ctx.wizard.selectStep(0);
+                    return;
+                case 'Готово':
+                    ctx.reply("Окей, отправляю.", Markup.keyboard([[
+                        { text: 'Перемещение' },
+                    ]]
+                    ));
+                    ctx.scene.leave();
+                    return;
+                case 'Отмена':
+                    ctx.reply("Удаляю последний элемент.")
+                    ctx.scene.session.items.pop();
+                    await replyTotal(ctx);
+
+                    return;
+            }
         } catch (error) {
             console.log(error)
             ctx.reply('Упс... Произошла какая-то ошибка');
