@@ -53,6 +53,6 @@ app.listen(port, async () => {
         });
         await mongoose.connect(mongoURI);
     } catch (error) {
-        console.log(error.toJSON())
+        console.log(error)
     }
 })
