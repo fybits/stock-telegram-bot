@@ -9,8 +9,8 @@ class Chat {
         db.run(`CREATE TABLE IF NOT EXISTS chats (
             chat_id INTEGER PRIMARY KEY,
             step INTEGER,
-            current_item_id STRING,
-            is_boxed BOOLEAN,
+            current_item_id NUMBER,
+            is_boxed NUMBER,
         )`);
     }
 
