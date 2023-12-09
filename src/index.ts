@@ -11,6 +11,7 @@ import Chat from './models/chats';
 // import { initStep, selectingStep, amountStep, finalStep } from './dialog';
 import configureDB from "./db";
 import { Telegraf } from "telegraf";
+import { message } from 'telegraf/filters'
 
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN!)
 
@@ -50,7 +51,7 @@ app.use(await bot.createWebhook({ domain: "stock-telegram-bot-production.up.rail
 // })
 
 
-bot.on("text", (ctx) => ctx.reply("Hello"))
+bot.on(message("text"), (ctx) => ctx.reply("Hello"))
 
 
 app.listen(port, async () => {
