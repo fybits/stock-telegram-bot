@@ -27,11 +27,11 @@ app.listen(port, async () => {
         // });
         // app.set('db', configureDB());
         bot.use(stage.middleware());
-        bot.hears("Перемещение", ctx => ctx.scene.enter('createTransferScene'));
         app.use(await bot.createWebhook({ domain: "stock-telegram-bot-production.up.railway.app", path: "/webhook" }));
         bot.on(message("text"), (ctx) => {
             console.log(ctx.chat.id,)
         })
+        bot.hears("Перемещение", ctx => ctx.scene.enter('createTransferScene'));
 
 
     } catch (error) {
