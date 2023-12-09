@@ -17,13 +17,6 @@ import createTransferScene, { CustomContext } from "./scenes/transfer";
 const bot = new Telegraf<CustomContext>(process.env.TELEGRAM_TOKEN!)
 const stage = new Scenes.Stage([createTransferScene])
 
-bot.use(stage.middleware());
-bot.hears("Перемещение", ctx => ctx.scene.enter('createTransferScene'));
-app.use(await bot.createWebhook({ domain: "stock-telegram-bot-production.up.railway.app", path: "/webhook" }));
-
-bot.on(message("text"), (ctx) => {
-    console.log(ctx.chat.id,)
-})
 
 
 app.listen(port, async () => {
@@ -33,6 +26,14 @@ app.listen(port, async () => {
         //     url: "https://stock-telegram-bot-production.up.railway.app/webhook"
         // });
         // app.set('db', configureDB());
+        bot.use(stage.middleware());
+        bot.hears("Перемещение", ctx => ctx.scene.enter('createTransferScene'));
+        app.use(await bot.createWebhook({ domain: "stock-telegram-bot-production.up.railway.app", path: "/webhook" }));
+        bot.on(message("text"), (ctx) => {
+            console.log(ctx.chat.id,)
+        })
+
+
     } catch (error) {
         console.log(error)
     }
