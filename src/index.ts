@@ -10,48 +10,20 @@ import Item from './models/items';
 import Chat from './models/chats';
 // import { initStep, selectingStep, amountStep, finalStep } from './dialog';
 import configureDB from "./db";
-import { Telegraf } from "telegraf";
+import { Scenes, Telegraf } from "telegraf";
 import { message } from 'telegraf/filters'
+import createTransferScene, { CustomContext } from "./scenes/transfer";
 
-const bot = new Telegraf(process.env.TELEGRAM_TOKEN!)
+const bot = new Telegraf<CustomContext>(process.env.TELEGRAM_TOKEN!)
+const stage = new Scenes.Stage([createTransferScene])
 
+bot.use(stage.middleware());
+bot.hears("Перемещение", ctx => ctx.scene.enter('createTransferScene'));
 app.use(await bot.createWebhook({ domain: "stock-telegram-bot-production.up.railway.app", path: "/webhook" }));
-// app.use(bodyParser.json());
 
-// app.get('/', async (req, res) => {
-//     const response = await axios.get(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/getMe`);
-//     console.log(response.data);
-//     res.send('Hello World!')
-// })
-
-// app.post('/webhook', async (req, res) => {
-//     const { message } = req.body;
-//     if (message) {
-//         let chatStep = await Chat.findOne({ chat_id: message.chat.id });
-//         if (!chatStep) {
-//             chatStep = await Chat.create({ chat_id: message.chat.id, step: 0 });
-//         }
-//         console.log('##### STEP: ', message.chat.id, chatStep.step)
-//         const items = await Item.find()
-//         if (message.text === 'Отмена') {
-//             chatStep.step = 0;
-//             await chatStep.save();
-//         }
-//         let done = false;
-//         // if (!done) done = await initStep(message, items, chatStep)
-//         // if (!done) done = await selectingStep(message, items, chatStep)
-//         // if (!done) done = await amountStep(message, items, chatStep)
-//         // if (!done) done = await finalStep(message, items, chatStep)
-
-//         if (message.text === 'Добавить') {
-
-//         }
-//     }
-//     res.send('')
-// })
-
-
-bot.on(message("text"), (ctx) => ctx.reply("Hello"))
+bot.on(message("text"), (ctx) => {
+    console.log(ctx.chat.id,)
+})
 
 
 app.listen(port, async () => {
