@@ -1,8 +1,12 @@
 import dotenv from "dotenv"
 dotenv.config();
-
+import express, { Express } from "express";
 const port = process.env.PORT;
 import configureDB from "./db";
+let app: Express | null = null;;
+if (process.env.ENV_TYPE !== 'DEVELOPMENT') {
+    app = express();
+}
 
 import { Markup, MiddlewareFn, Scenes, Telegraf, session } from "telegraf";
 import { message } from 'telegraf/filters'
@@ -23,7 +27,6 @@ const launchBot = async () => {
                 ctx.db = db;
                 return next()
             }
-
         }
         bot.use(dbMiddleware());
         bot.use(session())
@@ -77,6 +80,11 @@ const launchBot = async () => {
                 });
             }
         } else {
+            if (app) {
+                app.listen(port, async () => {
+                    app!.use(await bot.createWebhook({ domain: "stock-telegram-bot-production.up.railway.app", path: "/webhook" }));
+                });
+            }
             bot.launch({
                 webhook: {
                     domain: "stock-telegram-bot-production.up.railway.app",
