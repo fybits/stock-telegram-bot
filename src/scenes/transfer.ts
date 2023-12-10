@@ -133,7 +133,7 @@ createTransferScene.enter(async (ctx) => {
     ]))
 });
 
-createTransferScene.hears('Отмена', (ctx) => ctx.scene.leave())
+createTransferScene.hears('Отмена', (ctx) => ctx.scene.leave());
 
 
 export default createTransferScene;

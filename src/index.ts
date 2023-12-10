@@ -38,12 +38,7 @@ const launchBot = async () => {
             const items = await Item.getAll();
             let maxLength = Math.max(...items.map(({ name }) => name.length));
             ctx.reply(`Список всех позиций\n<code>${items.map((i) => `${i.id}. ${i.name.padEnd(maxLength + 1)} - ${i.box_size}шт. в коробке`).join('\n')}</code>`, {
-                parse_mode: 'HTML',
-                ...Markup.keyboard([[
-                    { text: 'Добавить еще' },
-                    { text: 'Готово' },
-                ], [{ text: 'Отмена' }]]
-                )
+                parse_mode: 'HTML'
             });
         });
         bot.command("del", async (ctx) => {
