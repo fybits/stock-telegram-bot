@@ -85,12 +85,12 @@ const launchBot = async () => {
                     app!.use(await bot.createWebhook({ domain: "stock-telegram-bot-production.up.railway.app", path: "/webhook" }));
                 });
             }
-            bot.launch({
-                webhook: {
-                    domain: "stock-telegram-bot-production.up.railway.app",
-                    path: "/webhook",
-                },
-            });
+            // bot.launch({
+            //     webhook: {
+            //         domain: "stock-telegram-bot-production.up.railway.app",
+            //         path: "/webhook",
+            //     },
+            // });
             if (bot) {
                 bot.telegram.getMe().then((res) => {
                     console.log(
