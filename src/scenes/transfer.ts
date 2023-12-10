@@ -1,23 +1,20 @@
+import sqlite3 from 'sqlite3';
 import { Telegraf, Scenes, Markup, Middleware, Context } from 'telegraf';
 import { message } from 'telegraf/filters';
 import { Update } from 'telegraf/typings/core/types/typegram';
-
-const options = ['Something', 'Otherthing', 'Third thing'];
+import { isNumeric } from '../utls';
+import Item from '../models/items';
 
 interface SessionData extends Scenes.WizardSessionData {
     current_item: string;
     amount: number;
     is_boxed: boolean;
-    items: { name: string, amount: number }[]
+    items: { name: string, amount: number }[];
 }
 
-export type CustomContext = Scenes.WizardContext<SessionData>;
-
-function isNumeric(str: string) {
-    if (typeof str != "string") return false // we only process strings!  
-    return !isNaN(+str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
-        !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
-}
+export type CustomContext = Scenes.WizardContext<SessionData> & {
+    db?: sqlite3.Database;
+};
 
 const replyTotal = async (ctx: CustomContext) => {
     const items = ctx.scene.session.items;
@@ -37,7 +34,8 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
         try {
             const msg = ctx.message;
             const { text } = msg;
-            if (!options.includes(text)) {
+            const items = await Item.getAll();
+            if (!items.find((i) => i.name === text)) {
                 return ctx.reply('Неверное значение. Попробуй еще раз:)');
             }
             ctx.reply("Хорошо. Выбери коробках или в штуках", Markup.keyboard([[
@@ -92,8 +90,9 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
             const { text } = msg;
             switch (text) {
                 case 'Добавить еще':
+                    const items = await Item.getAll();
                     ctx.reply("Выберите одну из опций ниже", Markup.keyboard([
-                        options,
+                        items.map((i) => ({ text: i.name })),
                         [{ text: 'Отмена' }]
                     ]))
                     ctx.wizard.selectStep(0);
@@ -106,8 +105,15 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
                     ctx.scene.leave();
                     return;
                 case 'Отмена':
-                    ctx.reply("Удаляю последний элемент.")
                     ctx.scene.session.items.pop();
+                    if (ctx.scene.session.items.length === 0) {
+                        ctx.reply('Список пуст.', Markup.keyboard([[
+                            { text: 'Перемещение' },
+                        ]]));
+                        ctx.scene.leave();
+                        return;
+                    }
+                    ctx.reply("Удаляю последний элемент.")
                     await replyTotal(ctx);
 
                     return;
@@ -119,10 +125,13 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
     }),
 );
 
-createTransferScene.enter((ctx) => ctx.reply("Выберите одну из опций ниже", Markup.keyboard([
-    options,
-    [{ text: 'Отмена' }]
-])));
+createTransferScene.enter(async (ctx) => {
+    const items = await Item.getAll();
+    ctx.reply("Выберите одну из опций ниже", Markup.keyboard([
+        items.map((i) => ({ text: i.name })),
+        [{ text: 'Отмена' }]
+    ]))
+});
 
 
 export default createTransferScene;

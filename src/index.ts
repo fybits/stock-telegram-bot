@@ -1,17 +1,14 @@
-import express from "express"
-import axios from "axios";
-import bodyParser from "body-parser"
 import dotenv from "dotenv"
 dotenv.config();
 
 const port = process.env.PORT;
-import Item from './models/items';
-import Chat from './models/chats';
 import configureDB from "./db";
 
-import { Markup, Scenes, Telegraf, session } from "telegraf";
+import { Markup, MiddlewareFn, Scenes, Telegraf, session } from "telegraf";
 import { message } from 'telegraf/filters'
 import createTransferScene, { CustomContext } from "./scenes/transfer";
+import Item from "./models/items";
+import { isNumeric } from "./utls";
 
 const bot = new Telegraf<CustomContext>(process.env.TELEGRAM_TOKEN!)
 const stage = new Scenes.Stage<CustomContext>([createTransferScene])
@@ -20,14 +17,54 @@ const stage = new Scenes.Stage<CustomContext>([createTransferScene])
 const launchBot = async () => {
     console.log(`Example app listening on port ${port}`)
     try {
-        // .set('db', configureDB());
+        const db = configureDB();
+        const dbMiddleware = (): MiddlewareFn<CustomContext> => {
+            return (ctx, next) => {
+                ctx.db = db;
+                return next()
+            }
+
+        }
+        bot.use(dbMiddleware());
         bot.use(session())
         bot.use(stage.middleware());
         bot.hears("Перемещение", (ctx) => ctx.scene.enter('createTransferScene'));
-        bot.start(async (ctx) => ctx.reply("Введите \"/Перемещение\" чтобы начать перемещение", Markup.keyboard([[{ text: 'Перемещение' }]])));
+        bot.start(async (ctx) => ctx.reply("Введите \"_Перемещение_\" чтобы начать перемещение", Markup.keyboard([[{ text: 'Перемещение' }]])));
         bot.command("move", (ctx) => ctx.scene.enter('createTransferScene'));
+        bot.command("all", async (ctx) => {
+            const items = await Item.getAll();
+            let maxLength = Math.max(...items.map(({ name }) => name.length));
+            ctx.reply(`Список всех позиций\n<code>${items.map((i) => `${i.id}. ${i.name.padEnd(maxLength + 1)} - ${i.box_size}шт. в коробке`).join('\n')}</code>`, {
+                parse_mode: 'HTML',
+                ...Markup.keyboard([[
+                    { text: 'Добавить еще' },
+                    { text: 'Готово' },
+                ], [{ text: 'Отмена' }]]
+                )
+            });
+        });
+        bot.command("del", async (ctx) => {
+            if (ctx.args.length !== 1 || !isNumeric(ctx.args[0])) {
+                ctx.reply("/del <Номер>");
+            }
+            await Item.removeById(+ctx.args[0]);
+            ctx.reply(`Удалено`);
+        });
+        bot.command("add", async (ctx) => {
+            if (ctx.args.length !== 2) {
+                ctx.reply("/add <Название> <Количество в коробке>")
+                return;
+            }
+            if (!isNumeric(ctx.args[1])) {
+                ctx.reply(`/add <Название> <Количество в коробке>\n
+                        Количество должно быть целым числом`);
+                return
+            }
+            await Item.create(ctx.args[0], +ctx.args[1]);
+            ctx.reply(`Позиция добавлена!`);
+        })
         bot.on(message("text"), (ctx) => {
-            ctx.reply("Введите \"/Перемещение\" чтобы начать перемещение", Markup.keyboard([[{ text: 'Перемещение' }]]));
+            ctx.reply("Введите \"Перемещение\" чтобы начать перемещение", Markup.keyboard([[{ text: 'Перемещение' }]]));
             console.log(ctx.chat.id,)
         })
         if (process.env.ENV_TYPE === "DEVELOPMENT") {

@@ -8,7 +8,6 @@ const configureDB = () => {
         if (error) throw error;
         console.log('Connected to the sqlite database.');
     })
-    db.run(`CREATE TABLE IF NOT EXISTS meta`)
     db.serialize(() => {
         models.forEach((model) => {
             model.Migrate(db);
