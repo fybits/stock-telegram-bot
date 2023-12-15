@@ -117,7 +117,7 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
                     let maxLength = Math.max(...listItems.map(({ name }) => name.length));
                     const admins = await AdminUser.getAll();
                     admins.forEach((({ chat_id }) => {
-                        ctx.telegram.sendMessage(chat_id, `Итого\n<code>${listItems.map((i) => `${i.name.padEnd(maxLength + 1)} - ${i.amount} ${i.unit_name}`).join('\n')}</code>`, {
+                        ctx.telegram.sendMessage(chat_id, `Новое перемещение\n<code>${listItems.map((i) => `<b>${i.name.padEnd(maxLength + 1)}</b> - ${i.amount} ${i.unit_name}`).join('\n')}</code>`, {
                             parse_mode: 'HTML',
                         });
                     }))
