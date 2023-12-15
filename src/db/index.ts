@@ -37,8 +37,11 @@ const configureDB = () => {
                 return;
             }
             console.log(`Migrating ${migration.table_name} ${migration.version} ${tableVersion?.version}`);
-            db.run(`DROP TABLE IF EXISTS ${migration.table_name};`, () => { console.log('Dropped old version') });
-            db.run(migration.sql, () => console.log('Migrated new version'));
+            db.run(`DROP TABLE IF EXISTS ${migration.table_name};`, () => {
+                console.log('Dropped old version');
+                db.run(migration.sql, () => console.log('Migrated new version'));
+            });
+
             db.run(`INSERT INTO table_versions(table_name, version) VALUES('${migration.table_name}', ${migration.version})
                     ON CONFLICT(table_name) DO UPDATE SET version=${migration.version};`)
         })

@@ -13,6 +13,7 @@ import { message } from 'telegraf/filters'
 import createTransferScene, { CustomContext } from "./scenes/transfer";
 import Item, { UnitsSchema } from "./models/items";
 import { isNumeric } from "./utls";
+import AdminUser from "./models/admin_users";
 
 const bot = new Telegraf<CustomContext>(process.env.TELEGRAM_TOKEN!)
 const stage = new Scenes.Stage<CustomContext>([createTransferScene])
@@ -36,7 +37,7 @@ const launchBot = async () => {
         bot.command("all", async (ctx) => {
             const items = await Item.getAll();
             let maxLength = Math.max(...items.map(({ name }) => name.length));
-            ctx.reply(`Список всех позиций\n<code>${items.map((i) => `${i.id}. ${i.name.padEnd(maxLength + 1)} - ${JSON.stringify(i.schema)}`).join('\n')}</code>`, {
+            ctx.reply(`Список всех позиций\n<code>${items.map((i) => `${i.id}. ${i.name.padEnd(maxLength + 1)} - ${i.unit_name} ${JSON.stringify(i.schema)}`).join('\n')}</code>`, {
                 parse_mode: 'HTML'
             });
         });
@@ -47,6 +48,11 @@ const launchBot = async () => {
             await Item.removeById(+ctx.args[0]);
             ctx.reply(`Удалено`);
         });
+        bot.command("subscribe", async (ctx) => {
+            AdminUser.create(ctx.chat.id);
+            ctx.reply("Пользователь добавлен");
+        });
+
         bot.command("add", async (ctx) => {
             if (ctx.args.length < 2) {
                 // add Какао Грамм 36 Пачка 12 Коробка

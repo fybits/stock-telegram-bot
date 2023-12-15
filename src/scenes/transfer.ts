@@ -4,6 +4,7 @@ import { message } from 'telegraf/filters';
 import { Update } from 'telegraf/typings/core/types/typegram';
 import { isNumeric } from '../utls';
 import Item, { UnitsSchema } from '../models/items';
+import AdminUser from '../models/admin_users';
 
 interface SessionData extends Scenes.WizardSessionData {
     current_item: Item;
@@ -67,7 +68,7 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
             if (!unit) {
                 return ctx.reply('Неверное значение. Попробуй еще раз:)');
             }
-            ctx.reply(`Хорошо. Укажи сколько ${text} переносится.`, { reply_markup: { remove_keyboard: true } });
+            ctx.reply(`Хорошо. Укажи сколько ${text} переносится.`, { reply_markup: { force_reply: true } });
             ctx.scene.session.unit = unit[1];
             ctx.wizard.next()
         } catch (error) {
@@ -112,6 +113,14 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
                         { text: 'Перемещение' },
                     ]]
                     ));
+                    const listItems = ctx.scene.session.items;
+                    let maxLength = Math.max(...listItems.map(({ name }) => name.length));
+                    const admins = await AdminUser.getAll();
+                    admins.forEach((({ chat_id }) => {
+                        ctx.telegram.sendMessage(chat_id, `Итого\n<code>${listItems.map((i) => `${i.name.padEnd(maxLength + 1)} - ${i.amount} ${i.unit_name}`).join('\n')}</code>`, {
+                            parse_mode: 'HTML',
+                        });
+                    }))
                     ctx.scene.leave();
                     return;
                 case 'Отмена':
