@@ -11,7 +11,7 @@ if (process.env.ENV_TYPE !== 'DEVELOPMENT') {
 import { Markup, MiddlewareFn, Scenes, Telegraf, session } from "telegraf";
 import { message } from 'telegraf/filters'
 import createTransferScene, { CustomContext } from "./scenes/transfer";
-import Item from "./models/items";
+import Item, { UnitsSchema } from "./models/items";
 import { isNumeric } from "./utls";
 
 const bot = new Telegraf<CustomContext>(process.env.TELEGRAM_TOKEN!)
@@ -19,7 +19,6 @@ const stage = new Scenes.Stage<CustomContext>([createTransferScene])
 
 
 const launchBot = async () => {
-    console.log(`Example app listening on port ${port}`)
     try {
         const db = configureDB();
         const dbMiddleware = (): MiddlewareFn<CustomContext> => {
@@ -37,7 +36,7 @@ const launchBot = async () => {
         bot.command("all", async (ctx) => {
             const items = await Item.getAll();
             let maxLength = Math.max(...items.map(({ name }) => name.length));
-            ctx.reply(`Список всех позиций\n<code>${items.map((i) => `${i.id}. ${i.name.padEnd(maxLength + 1)} - ${i.box_size}шт. в коробке`).join('\n')}</code>`, {
+            ctx.reply(`Список всех позиций\n<code>${items.map((i) => `${i.id}. ${i.name.padEnd(maxLength + 1)} - ${JSON.stringify(i.schema)}`).join('\n')}</code>`, {
                 parse_mode: 'HTML'
             });
         });
@@ -49,16 +48,30 @@ const launchBot = async () => {
             ctx.reply(`Удалено`);
         });
         bot.command("add", async (ctx) => {
-            if (ctx.args.length !== 2) {
-                ctx.reply("/add <Название> <Количество в коробке>")
+            if (ctx.args.length < 2) {
+                // add Какао Грамм 36 Пачка 12 Коробка
+                ctx.reply("/add <Название> <Название единицы> [схема]")
                 return;
             }
-            if (!isNumeric(ctx.args[1])) {
-                ctx.reply(`/add <Название> <Количество в коробке>\n
-                        Количество должно быть целым числом`);
-                return
+            const [name, atomUnitName, ...schemaArgs] = ctx.args;
+            const schema: UnitsSchema = {}
+            if (schemaArgs.length % 2 !== 0) {
+                ctx.reply("Неверная схема! пример\n/add Какао Грамм 400 Пачка 12 Коробка")
+                return;
             }
-            await Item.create(ctx.args[0], +ctx.args[1]);
+            let totalUnits = 1;
+            for (let i = 0; i < schemaArgs.length; i += 2) {
+                if (!isNumeric(schemaArgs[i])) {
+                    ctx.reply("Неверная схема! пример\n/add Какао Грамм 400 Пачка 12 Коробка")
+                    return;
+                }
+                const amount = +schemaArgs[i];
+                const unitName = schemaArgs[i + 1];
+                totalUnits *= amount;
+                schema[unitName] = totalUnits;
+            }
+
+            await Item.create(name, atomUnitName, schema);
             ctx.reply(`Позиция добавлена!`);
         })
         bot.on(message("text"), (ctx) => {

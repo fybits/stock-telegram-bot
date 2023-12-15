@@ -3,13 +3,13 @@ import { Telegraf, Scenes, Markup, Middleware, Context } from 'telegraf';
 import { message } from 'telegraf/filters';
 import { Update } from 'telegraf/typings/core/types/typegram';
 import { isNumeric } from '../utls';
-import Item from '../models/items';
+import Item, { UnitsSchema } from '../models/items';
 
 interface SessionData extends Scenes.WizardSessionData {
-    current_item: string;
+    current_item: Item;
     amount: number;
-    is_boxed: boolean;
-    items: { name: string, amount: number }[];
+    unit: number;
+    items: { name: string, amount: number, unit_name: string }[];
 }
 
 export type CustomContext = Scenes.WizardContext<SessionData> & {
@@ -19,13 +19,14 @@ export type CustomContext = Scenes.WizardContext<SessionData> & {
 const replyTotal = async (ctx: CustomContext) => {
     const items = ctx.scene.session.items;
     let maxLength = Math.max(...items.map(({ name }) => name.length));
-    ctx.reply(`Итого\n<code>${items.map((i) => `${i.name.padEnd(maxLength + 1)} - ${i.amount} шт`).join('\n')}</code>`, {
+    ctx.reply(`Итого\n<code>${items.map((i) => `${i.name.padEnd(maxLength + 1)} - ${i.amount} ${i.unit_name}`).join('\n')}</code>`, {
         parse_mode: 'HTML',
         ...Markup.keyboard([[
             { text: 'Добавить еще' },
             { text: 'Готово' },
         ], [{ text: 'Отмена' }]]
         )
+
     });
 }
 
@@ -35,14 +36,20 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
             const msg = ctx.message;
             const { text } = msg;
             const items = await Item.getAll();
-            if (!items.find((i) => i.name === text)) {
+            const item = items.find((i) => i.name === text);
+            if (!item) {
                 return ctx.reply('Неверное значение. Попробуй еще раз:)');
             }
-            ctx.reply("Хорошо. Выбери коробках или в штуках", Markup.keyboard([[
-                { text: 'Коробки' },
-                { text: 'Штуки' },
+            const btns = Object.keys(item.schema).map((unitName) => ({ text: unitName }));
+            console.log([[
+                { text: item.unit_name },
+                ...btns,
+            ], [{ text: 'Отмена' }]])
+            ctx.reply("Хорошо. Выбери единицу измерения", Markup.keyboard([[
+                { text: item.unit_name },
+                ...btns,
             ], [{ text: 'Отмена' }]]));
-            ctx.scene.session.current_item = text;
+            ctx.scene.session.current_item = item;
             ctx.wizard.next()
         } catch (error) {
             console.log(error)
@@ -53,12 +60,15 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
         try {
             const msg = ctx.message;
             const { text } = msg;
-            if (!['Коробки', 'Штуки'].includes(text)) {
+            const item = ctx.scene.session.current_item;
+            const options = Object.entries(item.schema);
+            options.push([item.unit_name, 1]);
+            const unit = options.find(([unitName, amount]) => text === unitName);
+            if (!unit) {
                 return ctx.reply('Неверное значение. Попробуй еще раз:)');
             }
-            const is_boxed = text === 'Коробки';
-            ctx.reply(`Хорошо. Укажи сколько ${is_boxed ? 'коробок' : 'штук'} переносится.`, { reply_markup: { remove_keyboard: true } });
-            ctx.scene.session.is_boxed = is_boxed;
+            ctx.reply(`Хорошо. Укажи сколько ${text} переносится.`, { reply_markup: { remove_keyboard: true } });
+            ctx.scene.session.unit = unit[1];
             ctx.wizard.next()
         } catch (error) {
             console.log(error)
@@ -72,10 +82,10 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
             if (!isNumeric(text)) {
                 return ctx.reply('Неверное значение. Попробуй еще раз:)');
             }
-
+            const { current_item, unit } = ctx.scene.session;
             ctx.scene.session.amount = +text;
             const items = ctx.scene.session.items || [];
-            items.push({ name: ctx.scene.session.current_item, amount: ctx.scene.session.is_boxed ? +text * 12 : +text })
+            items.push({ name: current_item.name, amount: +text * unit, unit_name: current_item.unit_name })
             ctx.scene.session.items = items;
             await replyTotal(ctx)
             ctx.wizard.next();

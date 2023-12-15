@@ -1,30 +1,47 @@
 import sqlite3 from "sqlite3";
 
+export type UnitsSchema = { [unitName: string]: number };
+
+interface IItem {
+    id: number;
+    name: string;
+    unit_name: string;
+    schema: string;
+}
+
 class Item {
     static db: sqlite3.Database;
     id: number;
     name: string;
-    box_size: number;
-
+    unit_name: string;
+    schema: UnitsSchema;
     static Migrate(db: sqlite3.Database) {
         Item.db = db;
-        db.run(`CREATE TABLE IF NOT EXISTS items (
-            id INTEGER PRIMARY KEY,
-            name STRING,
-            box_size INTEGER
-        );`);
+        return {
+            table_name: 'items',
+            version: 2,
+            sql: `
+                CREATE TABLE IF NOT EXISTS items (
+                    id INTEGER PRIMARY KEY,
+                    name STRING,
+                    unit_name STRING,
+                    schema STRING
+                );`
+        }
     }
 
-    static async getAll(): Promise<Item[]> {
-        const data = await new Promise((resolve, reject) => {
-            Item.db.all(`SELECT * FROM items WHERE 1 = 1;`, (err, rows) => {
+    static async getAll() {
+        return new Promise<Item[]>((resolve, reject) => {
+            Item.db.all<IItem>(`SELECT * FROM items WHERE 1 = 1;`, (err, rows) => {
                 if (err) {
                     reject(err);
                 }
-                resolve(rows);
+                resolve(rows.map(({ schema, ...rest }) => {
+                    const parsedSchema: UnitsSchema = JSON.parse(schema);
+                    return { schema: parsedSchema, ...rest };
+                }));
             })
         })
-        return data as Promise<Item[]>;
     }
 
     static findOne(object: any): Item | null {
@@ -35,16 +52,17 @@ class Item {
         Item.db.run(`DELETE FROM items WHERE id = ${id};`)
     }
 
-    static create(name: string, box_size: number): Item | null {
-        Item.db.run(`INSERT INTO items (name, box_size)
-                     VALUES('${name}', ${box_size})`)
+    static create(name: string, unit_name: string, schema: UnitsSchema): Item | null {
+        Item.db.run(`INSERT INTO items (name, unit_name, schema)
+                     VALUES('${name}', '${unit_name}', '${JSON.stringify(schema)}')`)
         return null//new Item();
     }
 
-    constructor(id: number, name: string, box_size: number) {
+    constructor(id: number, name: string, unit_name: string, schema: UnitsSchema) {
         this.id = id;
         this.name = name;
-        this.box_size = box_size;
+        this.unit_name = unit_name;
+        this.schema = schema;
     }
 }
 
