@@ -42,10 +42,6 @@ const createTransferScene = new Scenes.WizardScene<CustomContext>('createTransfe
                 return ctx.reply('Неверное значение. Попробуй еще раз:)');
             }
             const btns = Object.keys(item.schema).map((unitName) => ({ text: unitName }));
-            console.log([[
-                { text: item.unit_name },
-                ...btns,
-            ], [{ text: 'Отмена' }]])
             ctx.reply("Хорошо. Выбери единицу измерения", Markup.keyboard([[
                 { text: item.unit_name },
                 ...btns,

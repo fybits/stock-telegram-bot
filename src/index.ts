@@ -50,7 +50,11 @@ const launchBot = async () => {
         });
         bot.command("subscribe", async (ctx) => {
             AdminUser.create(ctx.chat.id);
-            ctx.reply("Пользователь добавлен");
+            ctx.reply("Вы подписаны на обновления");
+        });
+        bot.command("unsubscribe", async (ctx) => {
+            AdminUser.removeByChatId(ctx.chat.id);
+            ctx.reply("Вы отписаны от обновлений");
         });
 
         bot.command("add", async (ctx) => {
@@ -82,7 +86,6 @@ const launchBot = async () => {
         })
         bot.on(message("text"), (ctx) => {
             ctx.reply("Введите \"Перемещение\" чтобы начать перемещение", Markup.keyboard([[{ text: 'Перемещение' }]]));
-            console.log(ctx.chat.id,)
         })
         if (process.env.ENV_TYPE === "DEVELOPMENT") {
             bot.launch();

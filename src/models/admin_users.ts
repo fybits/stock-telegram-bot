@@ -40,8 +40,8 @@ class AdminUser {
         return null//new Item();
     }
 
-    static removeById(id: number): void {
-        AdminUser.db.run(`DELETE FROM admin_users WHERE id = ${id};`)
+    static removeByChatId(chat_id: number): void {
+        AdminUser.db.run(`DELETE FROM admin_users WHERE chat_id = ${chat_id};`)
     }
 
     static create(chat_id: number): AdminUser | null {
